@@ -1,5 +1,7 @@
 import fetch from "node-fetch";
 import { Repos, Contributor } from "./Interfaces";
+const _ = require('lodash');
+
 
 export class GithubRepos {
   async requesRepos(orgName: string)
@@ -22,14 +24,15 @@ export class GithubRepos {
 }
 
 
+
 export class GithubContributor {
   async requestContributors(orgName: string, reposNames: string[]): Promise<[string, number][]> {
     let rowContributors = new Map<string, number>();
-    for (let i in reposNames) {
-      let url: string = "https://api.github.com/repos/" + orgName + "/" + reposNames[i] + "/contributors";
+
+    await Promise.all(_.map(reposNames, async (item) => {
+      let url: string = "https://api.github.com/repos/" + orgName + "/" + item + "/contributors";
       let json: JSON = await fetch(url, { headers: { Authorization: process.env.PERSONAL_TOKEN } })
         .then(response => response.json());
-
       Object
         .entries(json)
         .map(contributor => {
@@ -47,9 +50,7 @@ export class GithubContributor {
             }
           }
         })
-    }
-
-
+    }))
 
     let sortContributors: [string, number][] = Array.from(rowContributors.entries())
     if (sortContributors.length > 1) {
